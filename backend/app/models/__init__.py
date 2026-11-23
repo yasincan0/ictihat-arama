@@ -1,12 +1,21 @@
 from app.models.base import Base
 from app.models.decision import Decision, DecisionChunk, DecisionStatus
-from app.models.user import SearchLog, Subscription, SubscriptionStatus, User
+from app.models.user import (
+    EmailToken,
+    EmailTokenPurpose,
+    SearchLog,
+    Subscription,
+    SubscriptionStatus,
+    User,
+)
 
 __all__ = [
     "Base",
     "Decision",
     "DecisionChunk",
     "DecisionStatus",
+    "EmailToken",
+    "EmailTokenPurpose",
     "SearchLog",
     "Subscription",
     "SubscriptionStatus",

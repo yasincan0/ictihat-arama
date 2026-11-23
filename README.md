@@ -54,3 +54,13 @@ python -m data.pipeline.verify_official --liste    # indirme listesini yeniden �
 Tüm denetimlerden (esas, karar, karar tarihi, Resmî Gazete tarih/sayısı, kurul adı, özet
 uyumu, hüküm yönü) geçen kararlar `dogrulandi=true` yapılır; diğerleri gerekçeleriyle
 `docs/dogrulama_raporu.md` içinde listelenir. Önceden doğrulanmış kayıtlara dokunulmaz.
+
+## Üyelik (arka uç)
+
+`/auth` altında: `register`, `verify-email`, `resend-verification`, `login`, `logout`, `me`,
+`forgot-password`, `reset-password`. Şifreler argon2 ile saklanır; oturum HttpOnly,
+SameSite=Lax çerezde JWT olarak taşınır. Geliştirmede e-postalar (doğrulama/sıfırlama
+bağlantıları) backend günlüğüne yazılır (`EMAIL_BACKEND=console`). Aboneliği olmayan
+kullanıcının aylık ücretsiz arama hakkı `FREE_SEARCHES_PER_MONTH` (varsayılan 3);
+`GET /auth/me` kalan hakkı da döner. Üretimde (`APP_ENV=production`) uygulama, güçlü bir
+`SECRET_KEY`, `COOKIE_SECURE=true` ve gerçek bir e-posta sağlayıcısı olmadan açılmaz.

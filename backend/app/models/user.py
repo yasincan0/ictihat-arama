@@ -20,10 +20,44 @@ class User(TimestampMixin, Base):
     baro_sicil_no: Mapped[str | None] = mapped_column(String(50))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # Şifre değiştiğinde bundan önce düzenlenmiş oturum jetonları geçersiz sayılır
+    password_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     subscriptions: Mapped[list["Subscription"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+
+
+class EmailTokenPurpose(str, enum.Enum):
+    VERIFY_EMAIL = "verify_email"
+    RESET_PASSWORD = "reset_password"
+
+
+class EmailToken(Base):
+    """Tek kullanımlık e-posta jetonları. Ham jeton saklanmaz, yalnızca SHA-256 özeti."""
+
+    __tablename__ = "email_tokens"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    purpose: Mapped[EmailTokenPurpose] = mapped_column(
+        Enum(
+            EmailTokenPurpose,
+            name="email_token_purpose",
+            values_callable=lambda e: [m.value for m in e],
+        ),
+        nullable=False,
+    )
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    user: Mapped[User] = relationship()
 
 
 class SubscriptionStatus(str, enum.Enum):
