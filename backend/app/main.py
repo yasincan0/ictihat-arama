@@ -1,5 +1,8 @@
 """FastAPI uygulamasının giriş noktası."""
 
+import logging
+import threading
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -41,10 +44,27 @@ def check_production_settings(settings: Settings) -> None:
         raise RuntimeError("Üretim ayarları hatalı: " + "; ".join(problems))
 
 
+def _warm_up_embedder() -> None:
+    """Embedding modelini arka planda belleğe yükler; ilk arama beklemesin."""
+    from app.services.embedding import get_embedder
+
+    try:
+        get_embedder().encode_query("ısınma")
+    except Exception:  # model sorunları ilk aramada görünür; açılışı engellemesin
+        logging.getLogger(__name__).exception("Embedding modeli ısıtılamadı")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    if get_settings().embedding_backend == "sentence-transformers":
+        threading.Thread(target=_warm_up_embedder, daemon=True).start()
+    yield
+
+
 def create_app() -> FastAPI:
     settings = get_settings()
     check_production_settings(settings)
-    app = FastAPI(title="İçtihat Arama API", version="0.1.0")
+    app = FastAPI(title="İçtihat Arama API", version="0.1.0", lifespan=lifespan)
     install_redaction()
     # Sıra: en son eklenen en dışta çalışır.
     app.add_middleware(OriginCheckMiddleware, settings=settings)
