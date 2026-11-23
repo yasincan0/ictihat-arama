@@ -221,3 +221,20 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- İçtihat Arama projesine özel ---
+# Ham ve işlenmiş veri git'e girmez (klasörler .gitkeep ile tutulur)
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# Ön yüz
+node_modules/
+frontend/.next/
+frontend/out/
+frontend/next-env.d.ts
+*.tsbuildinfo
+
+# Embedding model önbelleği
+.hf_cache/
