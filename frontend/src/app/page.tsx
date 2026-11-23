@@ -25,7 +25,7 @@ export default function Home() {
             Ücretsiz hesap aç
           </Link>
         </div>
-        <p className="mt-3 text-sm text-slate-500">Abonelik olmadan ayda 3 ücretsiz arama.</p>
+        <p className="mt-3 text-sm text-slate-500">Deneme sürümü: arama için hesap gerekmez.</p>
       </section>
 
       <section className="grid gap-6 pb-16 sm:grid-cols-3">

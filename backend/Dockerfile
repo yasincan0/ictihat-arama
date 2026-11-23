@@ -1,13 +1,19 @@
+# Derleme bağlamı depo köküdür (docker-compose.yml: context: ., dockerfile: backend/Dockerfile)
 FROM python:3.12-slim
 
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 \
+    HF_HOME=/models
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY backend/requirements.txt backend/requirements.txt
+# CPU sürümü torch (GPU sürümünden çok daha küçük), ardından diğer bağımlılıklar
+RUN pip install --index-url https://download.pytorch.org/whl/cpu torch \
+    && pip install -r backend/requirements.txt
 
-COPY . .
+COPY backend backend
+COPY data/__init__.py data/__init__.py
+COPY data/pipeline data/pipeline
+COPY data/seed data/seed
 
 EXPOSE 8000
-# Başlarken migration'ları uygula, sonra API'yi çalıştır.
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+CMD ["sh", "backend/start.sh"]

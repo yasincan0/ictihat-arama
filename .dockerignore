@@ -1,0 +1,12 @@
+# Backend imajı depo kökünden derlenir (backend/ + data/ gerekir)
+.git
+frontend
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/node_modules
+**/.next
+data/raw
+data/processed
+backend/tests
+.env

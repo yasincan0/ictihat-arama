@@ -64,7 +64,8 @@ def get_quota(session: Session, user: User, now: datetime | None = None,
             SearchLog.user_id == user.id, SearchLog.created_at >= start
         )
     ) or 0
-    if has_active_subscription(session, user, now):
+    # Abonelik sistemi kapalıyken kota uygulanmaz
+    if not settings.payments_enabled or has_active_subscription(session, user, now):
         return QuotaStatus(unlimited=True, used=used, limit=None, period_start=start)
     return QuotaStatus(unlimited=False, used=used, limit=settings.free_searches_per_month,
                        period_start=start)

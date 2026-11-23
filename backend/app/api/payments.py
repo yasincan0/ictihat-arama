@@ -40,7 +40,14 @@ from app.services.payments import (
 from app.services.quota import has_active_subscription
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/payments", tags=["abonelik"])
+def payments_enabled_guard() -> None:
+    """Abonelik sistemi kapalıyken (PAYMENTS_ENABLED=false) tüm ödeme uçları 404 döner."""
+    if not get_settings().payments_enabled:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Abonelik sistemi şu an kapalı")
+
+
+router = APIRouter(prefix="/payments", tags=["abonelik"],
+                   dependencies=[Depends(payments_enabled_guard)])
 
 PLAN = "aylik"
 

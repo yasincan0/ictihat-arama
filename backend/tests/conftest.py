@@ -61,3 +61,15 @@ def _reset_rate_limiter():
     get_rate_limiter().reset()
     yield
     get_rate_limiter().reset()
+
+
+@pytest.fixture
+def payments_on(monkeypatch):
+    """Abonelik/kota sistemini açık çalıştırır (varsayılan: kapalı)."""
+    from app.core.config import get_settings
+
+    monkeypatch.setenv("PAYMENTS_ENABLED", "true")
+    get_settings.cache_clear()
+    yield
+    monkeypatch.delenv("PAYMENTS_ENABLED")
+    get_settings.cache_clear()

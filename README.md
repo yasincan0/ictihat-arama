@@ -6,13 +6,32 @@ kararlarını** anlamsal arama ile bulabildiği abonelikli web uygulaması.
 
 Proje kuralları: [`CLAUDE.md`](CLAUDE.md) · Yol haritası: [`docs/PLAN.md`](docs/PLAN.md)
 
-## Hızlı başlangıç
+## Denemek için (deneme sürümü)
+
+Gerekenler: Docker Desktop (veya Docker Engine + Compose) ve ~6 GB boş disk.
 
 ```bash
-cp .env.example .env              # değerleri doldurun
-docker compose up -d --build      # db + backend (8000) + frontend (3000)
-curl localhost:8000/health        # {"status":"ok"}
+cp .env.example .env              # açıklamalar için ANTHROPIC_API_KEY=... yazın (isteğe bağlı)
+docker compose up -d --build      # ilk açılış 5-15 dk sürebilir (model indirme)
+docker compose logs -f backend    # "Uvicorn running" görününce hazır
 ```
+
+Ardından tarayıcıda **http://localhost:3000/ara** adresini açın ve davadaki olayı gündelik dille
+yazın (en az 30 karakter). Örnek: *"Limited şirketin vergi borcu için vergi dairesi doğrudan
+ortağa ödeme emri gönderdi."*
+
+Deneme sürümünde:
+- Arama hesap gerektirmez; abonelik ve kota sistemi kapalıdır (`PAYMENTS_ENABLED=false`).
+- Aranan veri: başlangıç listesindeki 108 kararın **özetleri** (ikincil kaynaklardan; hiçbiri
+  henüz resmî kaynaktan doğrulanmadı, arayüzde uyarıyla gösterilir). 19 kararın özeti
+  olmadığı için aranamaz. Resmî tam metinler (Adım 2b) eklendikçe arama tam metin üzerinden yapılır.
+- `ANTHROPIC_API_KEY` tanımlıysa ilk 5 sonuç için Claude "neden uygun?" açıklaması yazar
+  (yalnızca karar metnine dayanır, künyeye atıf yapar, alıntılar metinde birebir denetlenir).
+  Anahtar yoksa sonuçlar yalnızca anlamsal benzerliğe göre sıralanır.
+- Olay metni kaydedilmez ve günlüğe yazılmaz; açıklama açıksa Anthropic API'sine gönderilir.
+
+Durdurmak: `docker compose down` (veriler ve indirilen model birimlerde kalır).
+Bilgisayarınızda 5432 portu doluysa: `POSTGRES_PORT=5433 docker compose up -d --build`.
 
 ## Docker olmadan geliştirme
 
@@ -27,6 +46,18 @@ python3.12 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
 cd ../frontend && npm install && npm run dev
 npm test                          # ön yüz testleri (Vitest)
 ```
+
+## Vektörleştirme ve arama (Docker olmadan)
+
+```bash
+# depo kökünden
+python -m data.pipeline.load_seed
+python -m data.pipeline.embed            # parçası olmayan/değişen kararları vektörleştirir
+python -m data.pipeline.embed --force    # hepsini yeniden
+```
+
+Uç noktalar: `POST /search` (`{"olay": "..."}`), `GET /decisions/{id}`, `GET /config`.
+Embedding modeli `EMBEDDING_MODEL` ile değiştirilebilir (boyut `EMBEDDING_DIM` ile uyumlu olmalı).
 
 ## Başlangıç listesini yükleme
 

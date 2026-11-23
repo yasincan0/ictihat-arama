@@ -88,6 +88,7 @@ LIMITS = {
     "email_send_addr": (3, 60 * 60),
     "token_ip": (30, 60 * 60),  # doğrulama ve şifre sıfırlama jetonu denemeleri
     "checkout_user": (10, 60 * 60),
+    "search_ip": (60, 60 * 60),
 }
 
 

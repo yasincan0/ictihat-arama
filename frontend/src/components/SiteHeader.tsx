@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 
 export function SiteHeader() {
-  const { me, loading, logout } = useAuth();
+  const { me, loading, logout, config } = useAuth();
   const router = useRouter();
 
   return (
@@ -20,9 +20,11 @@ export function SiteHeader() {
           </Link>
           {loading ? null : me ? (
             <>
-              <Link href="/abonelik" className="text-slate-700 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
-                Abonelik
-              </Link>
+              {config?.abonelik_acik && (
+                <Link href="/abonelik" className="text-slate-700 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
+                  Abonelik
+                </Link>
+              )}
               <Link href="/hesap" className="hidden text-slate-500 hover:text-slate-900 sm:inline dark:hover:text-white" title={me.kullanici.email}>
                 {me.kullanici.full_name || me.kullanici.email}
               </Link>

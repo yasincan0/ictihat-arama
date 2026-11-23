@@ -85,12 +85,14 @@ def test_production_settings_are_checked():
     with pytest.raises(RuntimeError, match="sandbox"):
         check_production_settings(Settings(app_env="production", secret_key="x" * 40,
                                            cookie_secure=True, email_backend="smtp",
-                                           payment_provider="iyzico"))
+                                           cors_origins="https://ictihat.example",
+                                           payments_enabled=True, payment_provider="iyzico"))
 
 
 # --- Kayıt ve doğrulama ----------------------------------------------------------
 
 
+@pytest.mark.usefixtures("payments_on")
 def test_register_verify_login_me_logout(client, mailer, db):
     r = client.post("/auth/register", json={"email": EMAIL, "password": PW, "full_name": " Av. Ayşe "})
     assert r.status_code == 202
@@ -223,6 +225,7 @@ def test_password_reset_flow(client, mailer, db):
     assert client.get("/auth/me").status_code == 200
 
     # Eski oturum artık geçersiz
+    client.cookies.clear()
     client.cookies.set("ictihat_oturum", old_session)
     assert client.get("/auth/me").status_code == 401
 
@@ -250,6 +253,7 @@ def test_month_start_uses_istanbul_time():
     assert month_start(now, "Europe/Istanbul") == datetime(2026, 10, 31, 21, 0, tzinfo=timezone.utc)
 
 
+@pytest.mark.usefixtures("payments_on")
 def test_free_quota_counts_this_month_only(db):
     u = _user(db)
     now = datetime(2026, 11, 20, 12, 0, tzinfo=timezone.utc)
@@ -269,6 +273,7 @@ def test_free_quota_counts_this_month_only(db):
     assert (q.remaining, q.allowed) == (0, False)
 
 
+@pytest.mark.usefixtures("payments_on")
 def test_active_subscription_is_unlimited(db):
     u = _user(db)
     now = datetime(2026, 11, 20, tzinfo=timezone.utc)
@@ -316,3 +321,12 @@ def test_delete_account_removes_personal_data(client, mailer, db):
     log = db.scalars(select(SearchLog)).one()
     assert log.user_id is None  # anonim istatistik olarak kalır
     assert client.get("/auth/me").status_code == 401
+
+
+def test_quota_unlimited_when_payments_disabled(db):
+    u = _user(db, "kapali@ornek.com")
+    for _ in range(5):
+        db.add(SearchLog(user_id=u.id, query_length=10, result_count=1, result_decision_ids=[]))
+    db.flush()
+    q = get_quota(db, u)
+    assert q.unlimited and q.allowed

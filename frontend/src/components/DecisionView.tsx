@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ApiError, getDecision } from "@/lib/api";
-import { formatKunye, formatResmiGazete } from "@/lib/format";
+import { formatResmiGazete } from "@/lib/format";
 import type { DecisionDetail } from "@/lib/types";
 import { Alert } from "./forms";
+import { resultTitle } from "./ResultCard";
 import { VerificationBadge } from "./VerificationBadge";
 
 export function DecisionView({ id }: { id: number }) {
@@ -35,11 +36,12 @@ export function DecisionView({ id }: { id: number }) {
       {!d && !error && <p className="mt-6 text-sm text-slate-500">Yükleniyor…</p>}
       {d && (
         <article className="mt-6">
-          <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl dark:text-slate-100">{formatKunye(d)}</h1>
+          <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl dark:text-slate-100">{resultTitle(d)}</h1>
           <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-500">
             <VerificationBadge verified={d.dogrulandi} source={d.dogrulama_kaynagi} />
             {formatResmiGazete(d) && <span>{formatResmiGazete(d)}</span>}
           </div>
+          {d.kategori && <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Konu: {d.kategori}</p>}
           {d.dogrulandi && d.dogrulama_kaynagi && (
             <p className="mt-2 text-xs text-slate-500">Doğrulama kaynağı: {d.dogrulama_kaynagi}</p>
           )}
@@ -64,9 +66,21 @@ export function DecisionView({ id }: { id: number }) {
                 {d.tam_metin}
               </div>
             ) : (
-              <p className="mt-2 text-sm text-slate-500">Bu kararın tam metni henüz eklenmedi.</p>
+              <p className="mt-2 text-sm text-slate-500">
+                Bu kararın tam metni henüz eklenmedi; yalnızca ikincil kaynaktan derlenmiş özeti mevcuttur.
+              </p>
             )}
           </section>
+          {d.notlar && d.notlar.length > 0 && (
+            <section className="mt-6">
+              <h2 className="font-semibold text-slate-900 dark:text-slate-100">Kaynak notları</h2>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-600 dark:text-slate-400">
+                {d.notlar.map((n) => (
+                  <li key={n}>{n}</li>
+                ))}
+              </ul>
+            </section>
+          )}
         </article>
       )}
     </div>

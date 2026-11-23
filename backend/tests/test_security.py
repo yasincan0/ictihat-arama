@@ -81,6 +81,7 @@ def test_security_headers(client):
     assert h["Cache-Control"] == "no-store"
 
 
+@pytest.mark.usefixtures("payments_on")
 def test_cross_origin_post_rejected(client):
     body = {"email": "z@ornek.com", "password": "yanlis-sifre-1"}
     r = client.post("/auth/login", json=body, headers={"Origin": "https://kotu.example"})

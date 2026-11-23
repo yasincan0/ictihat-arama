@@ -5,6 +5,10 @@ RUN npm ci
 
 FROM node:22-alpine AS build
 WORKDIR /app
+# NEXT_PUBLIC_* değerleri derleme sırasında koda gömülür
+ARG NEXT_PUBLIC_API_URL=http://localhost:8000
+ARG NEXT_PUBLIC_MOCK_SEARCH=false
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL NEXT_PUBLIC_MOCK_SEARCH=$NEXT_PUBLIC_MOCK_SEARCH
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build

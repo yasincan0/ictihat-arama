@@ -23,6 +23,11 @@ BILLING = {"ad": "Ayşe", "soyad": "Yılmaz", "tckn": "10000000146", "telefon": 
            "adres": "Örnek Mah. Test Sok. No:1", "sehir": "Ankara"}
 
 
+@pytest.fixture(autouse=True)
+def _payments(payments_on):
+    yield
+
+
 @pytest.fixture
 def provider():
     return FakeProvider()
@@ -264,3 +269,13 @@ def test_iyzico_webhook_signature():
         p.parse_webhook(payload, {})
     lax = _iyzico(lambda r: httpx.Response(500), require_webhook_signature=False)
     assert lax.parse_webhook(payload, {}).event_type == "subscription.order.success"
+
+
+def test_payments_disabled_returns_404(client, monkeypatch):
+    from app.core.config import get_settings
+
+    monkeypatch.setenv("PAYMENTS_ENABLED", "false")
+    get_settings.cache_clear()
+    assert client.get("/payments/plan").status_code == 404
+    monkeypatch.setenv("PAYMENTS_ENABLED", "true")
+    get_settings.cache_clear()

@@ -19,6 +19,18 @@ class Settings(BaseSettings):
     # Embedding modeli değiştirilebilir; boyut migration ve modellerde buradan okunur.
     embedding_model: str = "BAAI/bge-m3"
     embedding_dim: int = Field(default=1024, gt=0)
+    # "sentence-transformers" (gerçek model) veya "hash" (yalnızca test; anlamsal değildir)
+    embedding_backend: str = "sentence-transformers"
+    embedding_device: str = "cpu"
+
+    # --- Arama ---
+    # Abonelik/kota sistemi şimdilik kapalı; kapalıyken arama sınırsızdır.
+    payments_enabled: bool = False
+    # Kapalıyken arama giriş yapmadan da kullanılabilir (deneme sürümü)
+    search_requires_login: bool = False
+    search_top_k: int = Field(default=10, gt=0, le=50)
+    # Claude açıklaması istenecek en iyi sonuç sayısı
+    explain_top_n: int = Field(default=5, ge=0, le=10)
 
     # --- Oturum ve üyelik ---
     # Oturum çerezi (HttpOnly, SameSite=Lax). Üretimde cookie_secure=true olmalı.
@@ -62,7 +74,10 @@ class Settings(BaseSettings):
     max_request_body_bytes: int = Field(default=64 * 1024, gt=0)
 
     anthropic_api_key: str = ""
-    anthropic_model: str = "claude-sonnet-5-5"
+    anthropic_model: str = "claude-opus-5-5"
+    # low | medium | high | xhigh | max
+    anthropic_effort: str = "medium"
+    anthropic_timeout_seconds: float = 90.0
 
     @property
     def cors_origin_list(self) -> list[str]:

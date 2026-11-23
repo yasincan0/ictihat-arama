@@ -16,7 +16,9 @@ services:
       retries: 10
 
   backend:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     env_file:
       - path: .env
         required: false
@@ -24,14 +26,25 @@ services:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-ictihat}:${POSTGRES_PASSWORD:-degistir}@db:5432/${POSTGRES_DB:-ictihat}
     ports:
       - "8000:8000"
+    volumes:
+      # Embedding modeli (~2,2 GB) bir kez indirilir ve burada saklanır
+      - models:/models
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
 
   frontend:
-    build: ./frontend
-    environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+        NEXT_PUBLIC_MOCK_SEARCH: ${NEXT_PUBLIC_MOCK_SEARCH:-false}
     ports:
       - "3000:3000"
     depends_on:
@@ -39,3 +52,4 @@ services:
 
 volumes:
   pgdata:
+  models:

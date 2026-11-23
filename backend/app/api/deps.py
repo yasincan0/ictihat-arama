@@ -33,3 +33,11 @@ def get_verified_user(user: User = Depends(get_current_user)) -> User:
     if not user.email_verified:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "E-posta adresinizi doğrulamanız gerekiyor")
     return user
+
+
+def optional_user(request: Request, db: Session = Depends(get_db)) -> User | None:
+    """Oturum varsa kullanıcıyı, yoksa None döndürür (geçersiz çerez de None sayılır)."""
+    try:
+        return get_current_user(request, db)
+    except HTTPException:
+        return None

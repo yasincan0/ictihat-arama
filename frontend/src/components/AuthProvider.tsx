@@ -1,10 +1,11 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { ApiError, auth } from "@/lib/api";
-import type { Me } from "@/lib/types";
+import { ApiError, auth, getConfig } from "@/lib/api";
+import type { Me, PublicConfig } from "@/lib/types";
 
 interface AuthState {
+  config: PublicConfig | null;
   me: Me | null;
   loading: boolean;
   refresh: () => Promise<void>;
@@ -12,6 +13,7 @@ interface AuthState {
 }
 
 const AuthContext = createContext<AuthState>({
+  config: null,
   me: null,
   loading: true,
   refresh: async () => {},
@@ -20,6 +22,7 @@ const AuthContext = createContext<AuthState>({
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [me, setMe] = useState<Me | null>(null);
+  const [config, setConfig] = useState<PublicConfig | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
@@ -44,9 +47,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     void refresh();
+    getConfig()
+      .then(setConfig)
+      .catch(() => setConfig(null));
   }, [refresh]);
 
-  return <AuthContext.Provider value={{ me, loading, refresh, logout }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ config, me, loading, refresh, logout }}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);

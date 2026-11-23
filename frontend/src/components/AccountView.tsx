@@ -8,7 +8,7 @@ import { useAuth } from "./AuthProvider";
 import { Alert, TextField } from "./forms";
 
 export function AccountView() {
-  const { me, loading, refresh } = useAuth();
+  const { me, loading, refresh, config } = useAuth();
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState(false);
@@ -39,11 +39,13 @@ export function AccountView() {
           </>
         )}
         <dt className="text-slate-500">Arama hakkı</dt>
-        <dd>{k.sinirsiz ? "Sınırsız (abonelik)" : `Bu ay ${k.kalan} / ${k.hak} kaldı`}</dd>
+        <dd>{k.sinirsiz ? "Sınırsız" : `Bu ay ${k.kalan} / ${k.hak} kaldı`}</dd>
       </dl>
-      <p className="mt-4 text-sm">
-        <Link href="/abonelik" className="underline underline-offset-4">Abonelik yönetimi</Link>
-      </p>
+      {config?.abonelik_acik && (
+        <p className="mt-4 text-sm">
+          <Link href="/abonelik" className="underline underline-offset-4">Abonelik yönetimi</Link>
+        </p>
+      )}
 
       <section className="mt-12 rounded-lg border border-red-200 p-5 dark:border-red-900">
         <h2 className="font-semibold text-red-800 dark:text-red-300">Hesabı sil</h2>

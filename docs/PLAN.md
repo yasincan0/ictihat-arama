@@ -77,6 +77,16 @@ Sonuçlar `docs/dogrulama_raporu.md` dosyasına yazılır.
 
 ---
 
+## Deneme sürümü (Adım 4-5'in ön sürümü)
+
+**Durum:** Resmî tam metinler gelene kadar arama başlangıç listesindeki özetler üzerinde
+çalışıyor: `data/pipeline/embed.py` (parçalama + bge-m3), `POST /search`, Claude açıklama
+katmanı (`backend/app/services/llm/`), `GET /decisions/{id}`. Abonelik sistemi
+`PAYMENTS_ENABLED=false` ile kapalı. Tam metinler eklendiğinde `embed` yalnızca değişen
+kararları yeniden vektörleştirir. Adım 4'teki test_cases.json ve değerlendirme betiği henüz yok.
+
+---
+
 ## Adım 3 — Ayrıştırma ve temizleme
 
 > data/raw içindeki kararları ayrıştır: mahkeme, kurul/daire, esas no, karar no, karar
