@@ -25,6 +25,7 @@ python3.12 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
 .venv/bin/pytest                  # veritabanı testleri için TEST_DATABASE_URL (varsayılan: ictihat_test)
 
 cd ../frontend && npm install && npm run dev
+npm test                          # ön yüz testleri (Vitest)
 ```
 
 ## Başlangıç listesini yükleme
@@ -64,3 +65,10 @@ bağlantıları) backend günlüğüne yazılır (`EMAIL_BACKEND=console`). Abon
 kullanıcının aylık ücretsiz arama hakkı `FREE_SEARCHES_PER_MONTH` (varsayılan 3);
 `GET /auth/me` kalan hakkı da döner. Üretimde (`APP_ENV=production`) uygulama, güçlü bir
 `SECRET_KEY`, `COOKIE_SECURE=true` ve gerçek bir e-posta sağlayıcısı olmadan açılmaz.
+
+## Arayüz (Adım 6)
+
+Sayfalar: `/` (tanıtım), `/giris`, `/kayit`, `/eposta-dogrula`, `/sifremi-unuttum`,
+`/sifre-sifirla`, `/ara`, `/karar/[id]`. Doğrulanmamış kararlar her yerde uyarı rozetiyle
+gösterilir. Arama uç noktası (Adım 4) hazır olana kadar `/ara` açıkça işaretlenmiş örnek
+sonuçlar gösterir; gerçek uca geçmek için `NEXT_PUBLIC_MOCK_SEARCH=false`.
