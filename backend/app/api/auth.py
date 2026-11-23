@@ -9,13 +9,14 @@ Güvenlik notları:
 
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.core.config import Settings, get_settings
 from app.core.db import get_db
+from app.core.ratelimit import client_ip, limit
 from app.core.security import (
     create_session_token,
     hash_email_token,
@@ -26,6 +27,7 @@ from app.core.security import (
 )
 from app.models import EmailToken, EmailTokenPurpose, User
 from app.schemas.auth import (
+    DeleteAccountRequest,
     EmailRequest,
     LoginRequest,
     MeResponse,
@@ -99,8 +101,10 @@ def _send_verification(db: Session, user: User, mailer: EmailSender, settings: S
 
 
 @router.post("/register", status_code=status.HTTP_202_ACCEPTED, response_model=MessageResponse)
-def register(body: RegisterRequest, db: Session = Depends(get_db),
+def register(body: RegisterRequest, request: Request, db: Session = Depends(get_db),
              mailer: EmailSender = Depends(get_email_sender)) -> MessageResponse:
+    limit("register_ip", client_ip(request))
+    limit("email_send_addr", normalize_email(body.email))
     settings = get_settings()
     existing = _find_user(db, body.email)
     if existing is not None:
@@ -123,7 +127,9 @@ def register(body: RegisterRequest, db: Session = Depends(get_db),
 
 
 @router.post("/verify-email", response_model=MessageResponse)
-def verify_email(body: TokenRequest, db: Session = Depends(get_db)) -> MessageResponse:
+def verify_email(body: TokenRequest, request: Request,
+                 db: Session = Depends(get_db)) -> MessageResponse:
+    limit("token_ip", client_ip(request))
     token = _consume_token(db, body.token, EmailTokenPurpose.VERIFY_EMAIL)
     if token is None:
         db.rollback()
@@ -135,8 +141,10 @@ def verify_email(body: TokenRequest, db: Session = Depends(get_db)) -> MessageRe
 
 @router.post("/resend-verification", status_code=status.HTTP_202_ACCEPTED,
              response_model=MessageResponse)
-def resend_verification(body: EmailRequest, db: Session = Depends(get_db),
+def resend_verification(body: EmailRequest, request: Request, db: Session = Depends(get_db),
                         mailer: EmailSender = Depends(get_email_sender)) -> MessageResponse:
+    limit("email_send_ip", client_ip(request))
+    limit("email_send_addr", normalize_email(body.email))
     user = _find_user(db, body.email)
     if user is not None and user.is_active and not user.email_verified:
         _send_verification(db, user, mailer, get_settings())
@@ -156,7 +164,10 @@ def _set_session_cookie(response: Response, user: User, settings: Settings) -> N
 
 
 @router.post("/login", response_model=UserResponse)
-def login(body: LoginRequest, response: Response, db: Session = Depends(get_db)) -> User:
+def login(body: LoginRequest, request: Request, response: Response,
+          db: Session = Depends(get_db)) -> User:
+    limit("login_ip", client_ip(request))
+    limit("login_email", normalize_email(body.email))
     settings = get_settings()
     user = _find_user(db, body.email)
     if not verify_password(body.password, user.password_hash if user else None) \
@@ -192,8 +203,10 @@ def me(user: User = Depends(get_current_user), db: Session = Depends(get_db)) ->
 
 @router.post("/forgot-password", status_code=status.HTTP_202_ACCEPTED,
              response_model=MessageResponse)
-def forgot_password(body: EmailRequest, db: Session = Depends(get_db),
+def forgot_password(body: EmailRequest, request: Request, db: Session = Depends(get_db),
                     mailer: EmailSender = Depends(get_email_sender)) -> MessageResponse:
+    limit("email_send_ip", client_ip(request))
+    limit("email_send_addr", normalize_email(body.email))
     settings = get_settings()
     user = _find_user(db, body.email)
     if user is not None and user.is_active:
@@ -205,8 +218,9 @@ def forgot_password(body: EmailRequest, db: Session = Depends(get_db),
 
 
 @router.post("/reset-password", response_model=MessageResponse)
-def reset_password(body: ResetPasswordRequest, response: Response,
+def reset_password(body: ResetPasswordRequest, request: Request, response: Response,
                    db: Session = Depends(get_db)) -> MessageResponse:
+    limit("token_ip", client_ip(request))
     token = _consume_token(db, body.token, EmailTokenPurpose.RESET_PASSWORD)
     if token is None or not token.user.is_active:
         db.rollback()
@@ -221,3 +235,32 @@ def reset_password(body: ResetPasswordRequest, response: Response,
     settings = get_settings()
     response.delete_cookie(settings.session_cookie_name, path="/")
     return MessageResponse(mesaj="Şifreniz değiştirildi. Yeni şifrenizle giriş yapabilirsiniz.")
+
+
+@router.post("/delete-account", response_model=MessageResponse)
+def delete_account(body: DeleteAccountRequest, request: Request, response: Response,
+                   user: User = Depends(get_current_user),
+                   db: Session = Depends(get_db)) -> MessageResponse:
+    """Hesabı ve kişisel verileri kalıcı olarak siler (KVKK m.7, m.11).
+
+    Abonelik, e-posta jetonları ve ödeme oturumları birlikte silinir; arama günlükleri
+    (olay metni içermez) kullanıcıdan ayrılarak anonim istatistik olarak kalır.
+    Etkin bir abonelik varken önce abonelik iptal edilmelidir (yenileme ücreti alınmasın).
+    """
+    limit("login_ip", client_ip(request))
+    if not verify_password(body.password, user.password_hash):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Şifre hatalı")
+    from app.models import Subscription, SubscriptionStatus
+
+    renewing = db.scalars(select(Subscription).where(
+        Subscription.user_id == user.id,
+        Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.PAST_DUE]),
+    )).first()
+    if renewing is not None:
+        raise HTTPException(status.HTTP_409_CONFLICT,
+                            "Hesabınızı silmeden önce aboneliğinizi iptal edin")
+    db.delete(user)
+    db.commit()
+    settings = get_settings()
+    response.delete_cookie(settings.session_cookie_name, path="/")
+    return MessageResponse(mesaj="Hesabınız ve kişisel verileriniz silindi.")

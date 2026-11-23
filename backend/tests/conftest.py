@@ -51,3 +51,13 @@ def db(engine):
         session.close()
         trans.rollback()
         connection.close()
+
+
+@pytest.fixture(autouse=True)
+def _reset_rate_limiter():
+    """İstek sınırlayıcı süreç genelinde tek; testler birbirini etkilemesin."""
+    from app.core.ratelimit import get_rate_limiter
+
+    get_rate_limiter().reset()
+    yield
+    get_rate_limiter().reset()

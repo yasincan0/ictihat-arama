@@ -94,3 +94,8 @@ iyzico sandbox ile denemek için:
 
 Fatura bilgileri (ad, T.C. kimlik no, telefon, adres) yalnızca iyzico'ya iletilir; veritabanına
 ve günlüklere yazılmaz. Kart bilgileri iyzico'nun formunda girilir, sistemimize hiç ulaşmaz.
+
+## Güvenlik (Adım 8)
+
+Ayrıntılı gözden geçirme ve bekleyen maddeler: [`docs/guvenlik.md`](docs/guvenlik.md).
+Hukuki metin taslakları: `/aydinlatma-metni`, `/kullanim-kosullari` (TASLAK; hukukçu düzenleyecek).

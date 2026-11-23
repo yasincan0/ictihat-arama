@@ -7,6 +7,12 @@ from app.api.auth import router as auth_router
 from app.api.health import router as health_router
 from app.api.payments import router as payments_router
 from app.core.config import Settings, get_settings
+from app.core.logging import install_redaction
+from app.core.middleware import (
+    BodySizeLimitMiddleware,
+    OriginCheckMiddleware,
+    SecurityHeadersMiddleware,
+)
 
 
 def check_production_settings(settings: Settings) -> None:
@@ -26,6 +32,10 @@ def check_production_settings(settings: Settings) -> None:
         problems.append("PAYMENT_PROVIDER=fake üretimde kullanılamaz")
     if settings.payment_provider == "iyzico" and "sandbox" in settings.iyzico_base_url:
         problems.append("Üretimde iyzico sandbox adresi kullanılamaz")
+    if "*" in settings.cors_origin_list:
+        problems.append("CORS_ORIGINS '*' olamaz (çerezli oturum)")
+    if any(o.startswith("http://") for o in settings.cors_origin_list):
+        problems.append("CORS_ORIGINS üretimde https olmalı")
     if problems:
         raise RuntimeError("Üretim ayarları hatalı: " + "; ".join(problems))
 
@@ -34,13 +44,19 @@ def create_app() -> FastAPI:
     settings = get_settings()
     check_production_settings(settings)
     app = FastAPI(title="İçtihat Arama API", version="0.1.0")
+    install_redaction()
+    # Sıra: en son eklenen en dışta çalışır.
+    app.add_middleware(OriginCheckMiddleware, settings=settings)
+    app.add_middleware(SecurityHeadersMiddleware, settings=settings)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origin_list,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["Content-Type", "Accept"],
+        max_age=600,
     )
+    app.add_middleware(BodySizeLimitMiddleware, max_bytes=settings.max_request_body_bytes)
     app.include_router(health_router)
     app.include_router(auth_router)
     app.include_router(payments_router)

@@ -70,3 +70,7 @@ class UserResponse(BaseModel):
 class MeResponse(BaseModel):
     kullanici: UserResponse
     kota: QuotaResponse
+
+
+class DeleteAccountRequest(BaseModel):
+    password: str = Field(max_length=PASSWORD_MAX_LENGTH)

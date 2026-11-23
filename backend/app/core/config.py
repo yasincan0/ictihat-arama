@@ -54,6 +54,13 @@ class Settings(BaseSettings):
     # Arayüzde gösterilecek fiyat metni, ör. "Aylık 499 TL (KDV dahil)"
     subscription_price_text: str = ""
 
+    # --- Güvenlik ---
+    rate_limit_enabled: bool = True
+    # Uygulama önünde güvenilen ters vekil (nginx vb.) sayısı. 0: X-Forwarded-For okunmaz.
+    trusted_proxy_count: int = Field(default=0, ge=0)
+    # İstek gövdesi üst sınırı (bayt)
+    max_request_body_bytes: int = Field(default=64 * 1024, gt=0)
+
     anthropic_api_key: str = ""
     anthropic_model: str = "claude-sonnet-5-5"
 

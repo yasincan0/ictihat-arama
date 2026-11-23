@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user, get_verified_user
 from app.core.config import get_settings
 from app.core.db import get_db
+from app.core.ratelimit import limit
 from app.models import PaymentCheckout, Subscription, SubscriptionStatus, User
 from app.schemas.auth import MessageResponse
 from app.schemas.payments import (
@@ -102,6 +103,7 @@ def my_subscription(user: User = Depends(get_current_user),
 def checkout(body: BillingRequest, user: User = Depends(get_verified_user),
              db: Session = Depends(get_db),
              provider: PaymentProvider = Depends(get_payment_provider)) -> CheckoutResponse:
+    limit("checkout_user", str(user.id))
     if has_active_subscription(db, user, _now()):
         raise HTTPException(status.HTTP_409_CONFLICT, "Zaten etkin bir aboneliğiniz var")
     s = get_settings()

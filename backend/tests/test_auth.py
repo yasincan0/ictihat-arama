@@ -79,6 +79,7 @@ def test_production_settings_are_checked():
         check_production_settings(Settings(app_env="production"))
     check_production_settings(Settings(app_env="production", secret_key="x" * 40,
                                        cookie_secure=True, email_backend="smtp",
+                                       cors_origins="https://ictihat.example",
                                        payment_provider="iyzico",
                                        iyzico_base_url="https://api.iyzipay.com"))
     with pytest.raises(RuntimeError, match="sandbox"):
@@ -284,3 +285,34 @@ def test_active_subscription_is_unlimited(db):
 
 def test_settings_default_free_searches():
     assert get_settings().free_searches_per_month == 3
+
+
+# --- Hesap silme (KVKK) -----------------------------------------------------------------
+
+
+def test_delete_account_removes_personal_data(client, mailer, db):
+    _register_and_verify(client, mailer)
+    client.post("/auth/login", json={"email": EMAIL, "password": PW})
+    user = db.scalars(select(User)).one()
+    uid = user.id
+    db.add(SearchLog(user_id=uid, query_length=50, result_count=3, result_decision_ids=[1, 2]))
+    db.add(Subscription(user_id=uid, plan="aylik", status=SubscriptionStatus.ACTIVE,
+                        current_period_end=datetime.now(timezone.utc) + timedelta(days=5)))
+    db.commit()
+
+    assert client.post("/auth/delete-account", json={"password": "yanlis-sifre-1"}).status_code == 401
+    # Yenilenen abonelik varken silinemez
+    assert client.post("/auth/delete-account", json={"password": PW}).status_code == 409
+    sub = db.scalars(select(Subscription)).one()
+    sub.status = SubscriptionStatus.CANCELED
+    db.commit()
+
+    r = client.post("/auth/delete-account", json={"password": PW})
+    assert r.status_code == 200
+    db.expire_all()
+    assert db.get(User, uid) is None
+    assert db.scalars(select(EmailToken)).all() == []
+    assert db.scalars(select(Subscription)).all() == []
+    log = db.scalars(select(SearchLog)).one()
+    assert log.user_id is None  # anonim istatistik olarak kalır
+    assert client.get("/auth/me").status_code == 401

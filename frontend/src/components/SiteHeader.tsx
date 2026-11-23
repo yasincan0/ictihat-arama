@@ -23,9 +23,9 @@ export function SiteHeader() {
               <Link href="/abonelik" className="text-slate-700 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
                 Abonelik
               </Link>
-              <span className="hidden text-slate-500 sm:inline" title={me.kullanici.email}>
+              <Link href="/hesap" className="hidden text-slate-500 hover:text-slate-900 sm:inline dark:hover:text-white" title={me.kullanici.email}>
                 {me.kullanici.full_name || me.kullanici.email}
-              </span>
+              </Link>
               <button
                 type="button"
                 onClick={async () => {

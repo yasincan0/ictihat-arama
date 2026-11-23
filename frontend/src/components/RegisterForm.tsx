@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { ApiError, auth } from "@/lib/api";
 import { validateEmail, validatePassword } from "@/lib/validation";
@@ -27,7 +28,7 @@ export function RegisterForm() {
           validateEmail(email) ??
           validatePassword(password) ??
           (password !== password2 ? "Şifreler aynı değil." : null) ??
-          (!consent ? "Devam etmek için aydınlatma metnini okuduğunuzu onaylayın." : null);
+          (!consent ? "Devam etmek için aydınlatma metnini okuduğunuzu ve kullanım koşullarını kabul ettiğinizi onaylayın." : null);
         setError(problem);
         if (problem) return;
         setBusy(true);
@@ -57,7 +58,10 @@ export function RegisterForm() {
       <TextField id="password2" label="Şifre (tekrar)" type="password" value={password2} onChange={setPassword2} autoComplete="new-password" required />
       <label className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1" />
-        <span>Kişisel verilerin işlenmesine ilişkin aydınlatma metnini okudum.</span>
+        <span>
+          <Link href="/aydinlatma-metni" target="_blank" className="underline underline-offset-2">Aydınlatma metnini</Link> okudum;{" "}
+          <Link href="/kullanim-kosullari" target="_blank" className="underline underline-offset-2">kullanım koşullarını</Link> kabul ediyorum.
+        </span>
       </label>
       <SubmitButton busy={busy}>Kayıt ol</SubmitButton>
     </form>
