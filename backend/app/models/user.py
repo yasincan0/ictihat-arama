@@ -85,9 +85,32 @@ class Subscription(TimestampMixin, Base):
     )
     provider: Mapped[str] = mapped_column(String(50), default="iyzico", nullable=False)
     provider_subscription_id: Mapped[str | None] = mapped_column(String(200), unique=True)
+    provider_customer_id: Mapped[str | None] = mapped_column(String(200))
     current_period_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     user: Mapped[User] = relationship(back_populates="subscriptions")
+
+
+class PaymentCheckout(Base):
+    """Başlatılan ödeme formları: sağlayıcının dönüşünde jetonu kullanıcıyla eşlemek için.
+    Fatura bilgileri (TC kimlik no, adres, telefon) burada SAKLANMAZ."""
+
+    __tablename__ = "payment_checkouts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    provider: Mapped[str] = mapped_column(String(50), nullable=False)
+    token: Mapped[str] = mapped_column(String(200), unique=True, nullable=False)
+    plan: Mapped[str] = mapped_column(String(50), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    result: Mapped[str | None] = mapped_column(String(50))
+
+    user: Mapped[User] = relationship()
 
 
 class SearchLog(Base):

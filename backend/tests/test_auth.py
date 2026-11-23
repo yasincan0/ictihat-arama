@@ -78,7 +78,13 @@ def test_production_settings_are_checked():
     with pytest.raises(RuntimeError, match="SECRET_KEY"):
         check_production_settings(Settings(app_env="production"))
     check_production_settings(Settings(app_env="production", secret_key="x" * 40,
-                                       cookie_secure=True, email_backend="smtp"))
+                                       cookie_secure=True, email_backend="smtp",
+                                       payment_provider="iyzico",
+                                       iyzico_base_url="https://api.iyzipay.com"))
+    with pytest.raises(RuntimeError, match="sandbox"):
+        check_production_settings(Settings(app_env="production", secret_key="x" * 40,
+                                           cookie_secure=True, email_backend="smtp",
+                                           payment_provider="iyzico"))
 
 
 # --- Kayıt ve doğrulama ----------------------------------------------------------

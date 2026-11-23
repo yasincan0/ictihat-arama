@@ -72,3 +72,25 @@ Sayfalar: `/` (tanıtım), `/giris`, `/kayit`, `/eposta-dogrula`, `/sifremi-unut
 `/sifre-sifirla`, `/ara`, `/karar/[id]`. Doğrulanmamış kararlar her yerde uyarı rozetiyle
 gösterilir. Arama uç noktası (Adım 4) hazır olana kadar `/ara` açıkça işaretlenmiş örnek
 sonuçlar gösterir; gerçek uca geçmek için `NEXT_PUBLIC_MOCK_SEARCH=false`.
+
+## Abonelik (Adım 7, 2. kısım)
+
+Ödeme `backend/app/services/payments` modülünün arkasındadır (`PAYMENT_PROVIDER`):
+- `fake`: geliştirme için sahte sağlayıcı; gerçek ödeme alınmaz (üretimde açılmaz).
+- `iyzico`: iyzico Abonelik API'si (ödeme formu, sorgulama, iptal, webhook).
+
+iyzico sandbox ile denemek için:
+1. https://sandbox-merchant.iyzipay.com adresinde hesap açın; API ve gizli anahtarı alın.
+2. Panelde bir ürün ve aylık ödeme planı oluşturun; planın referans kodunu
+   `IYZICO_PLAN_REFERENCE_CODE` olarak yazın.
+3. `.env`: `PAYMENT_PROVIDER=iyzico`, `IYZICO_API_KEY`, `IYZICO_SECRET_KEY`, `IYZICO_MERCHANT_ID`,
+   `BACKEND_URL` (iyzico'nun dönüş yapabileceği, dışarıdan erişilebilir adres).
+4. Abonelik bildirim adresini panelde `<BACKEND_URL>/payments/webhook/iyzico` olarak tanımlayın.
+   İmza başlığı (X-IYZ-SIGNATURE-V3) iyzico'dan açtırılmalıdır (entegrasyon@iyzico.com);
+   açılana kadar `IYZICO_WEBHOOK_REQUIRE_SIGNATURE=false` ile denenebilir. Bildirim gövdesine
+   güvenilmez: abonelik durumu her seferinde iyzico'dan sorgulanır.
+5. Test kartı: 5528790000000008 (SKT ileri bir tarih, CVC herhangi), 3D şifresi 123456.
+   Sandbox'ta T.C. kimlik no algoritmaya uygun olmalıdır (ör. 11111111110).
+
+Fatura bilgileri (ad, T.C. kimlik no, telefon, adres) yalnızca iyzico'ya iletilir; veritabanına
+ve günlüklere yazılmaz. Kart bilgileri iyzico'nun formunda girilir, sistemimize hiç ulaşmaz.

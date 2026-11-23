@@ -20,6 +20,9 @@ export function SiteHeader() {
           </Link>
           {loading ? null : me ? (
             <>
+              <Link href="/abonelik" className="text-slate-700 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
+                Abonelik
+              </Link>
               <span className="hidden text-slate-500 sm:inline" title={me.kullanici.email}>
                 {me.kullanici.full_name || me.kullanici.email}
               </span>

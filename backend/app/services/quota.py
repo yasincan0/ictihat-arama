@@ -41,10 +41,15 @@ def month_start(now: datetime, tz_name: str) -> datetime:
 
 
 def has_active_subscription(session: Session, user: User, now: datetime) -> bool:
+    """Etkin abonelik ya da iptal edilmiş ama ödemesi yapılmış dönemi bitmemiş abonelik."""
+    active = (Subscription.status == SubscriptionStatus.ACTIVE) & (
+        Subscription.current_period_end.is_(None) | (Subscription.current_period_end > now)
+    )
+    canceled_but_paid = (Subscription.status == SubscriptionStatus.CANCELED) & (
+        Subscription.current_period_end > now
+    )
     stmt = select(Subscription.id).where(
-        Subscription.user_id == user.id,
-        Subscription.status == SubscriptionStatus.ACTIVE,
-        (Subscription.current_period_end.is_(None)) | (Subscription.current_period_end > now),
+        Subscription.user_id == user.id, active | canceled_but_paid
     )
     return session.execute(stmt.limit(1)).first() is not None
 

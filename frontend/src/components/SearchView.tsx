@@ -40,7 +40,10 @@ export function SearchView({ mock = USE_MOCK_SEARCH }: { mock?: boolean }) {
             <Link href="/kayit" className="font-medium underline">ücretsiz hesap açın</Link>.
           </Alert>
         ) : outOfQuota ? (
-          <Alert kind="info">Bu ayki ücretsiz arama hakkınızı kullandınız. Sınırsız arama için abone olabilirsiniz.</Alert>
+          <Alert kind="info">
+            Bu ayki ücretsiz arama hakkınızı kullandınız. Sınırsız arama için{" "}
+            <Link href="/abonelik" className="font-medium underline">abone olabilirsiniz</Link>.
+          </Alert>
         ) : (
           <SearchForm
             busy={busy}

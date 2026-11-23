@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.auth import router as auth_router
 from app.api.health import router as health_router
+from app.api.payments import router as payments_router
 from app.core.config import Settings, get_settings
 
 
@@ -21,6 +22,10 @@ def check_production_settings(settings: Settings) -> None:
         problems.append("COOKIE_SECURE=true olmalı")
     if settings.email_backend == "console":
         problems.append("EMAIL_BACKEND=console üretimde kullanılamaz")
+    if settings.payment_provider == "fake":
+        problems.append("PAYMENT_PROVIDER=fake üretimde kullanılamaz")
+    if settings.payment_provider == "iyzico" and "sandbox" in settings.iyzico_base_url:
+        problems.append("Üretimde iyzico sandbox adresi kullanılamaz")
     if problems:
         raise RuntimeError("Üretim ayarları hatalı: " + "; ".join(problems))
 
@@ -38,6 +43,7 @@ def create_app() -> FastAPI:
     )
     app.include_router(health_router)
     app.include_router(auth_router)
+    app.include_router(payments_router)
     return app
 
 

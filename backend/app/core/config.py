@@ -38,6 +38,22 @@ class Settings(BaseSettings):
     # Kota ayı bu saat dilimine göre hesaplanır
     quota_timezone: str = "Europe/Istanbul"
 
+    # --- Ödeme / abonelik ---
+    # "fake": geliştirme ve test için sahte sağlayıcı; "iyzico": gerçek (sandbox veya canlı)
+    payment_provider: str = "fake"
+    # iyzico'nun ödeme sonucunu döndüreceği arka uç adresi (dışarıdan erişilebilir olmalı)
+    backend_url: str = "http://localhost:8000"
+    iyzico_api_key: str = ""
+    iyzico_secret_key: str = ""
+    iyzico_base_url: str = "https://sandbox-api.iyzipay.com"
+    # Webhook imzası (X-IYZ-SIGNATURE-V3) hesaplamasında kullanılır
+    iyzico_merchant_id: str = ""
+    # iyzico panelinde tanımlı aylık ödeme planının referans kodu
+    iyzico_plan_reference_code: str = ""
+    iyzico_webhook_require_signature: bool = True
+    # Arayüzde gösterilecek fiyat metni, ör. "Aylık 499 TL (KDV dahil)"
+    subscription_price_text: str = ""
+
     anthropic_api_key: str = ""
     anthropic_model: str = "claude-sonnet-5-5"
 

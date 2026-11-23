@@ -3,6 +3,7 @@ from app.models.decision import Decision, DecisionChunk, DecisionStatus
 from app.models.user import (
     EmailToken,
     EmailTokenPurpose,
+    PaymentCheckout,
     SearchLog,
     Subscription,
     SubscriptionStatus,
@@ -16,6 +17,7 @@ __all__ = [
     "DecisionStatus",
     "EmailToken",
     "EmailTokenPurpose",
+    "PaymentCheckout",
     "SearchLog",
     "Subscription",
     "SubscriptionStatus",
