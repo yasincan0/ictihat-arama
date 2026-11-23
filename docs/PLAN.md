@@ -53,6 +53,13 @@ commit et, sonra diğerine geç. Komutları olduğu gibi kopyalayabilirsin.
 yoksa kararların PDF'lerini elle indirip `data/raw` klasörüne koy ve Claude Code'a
 "bu dosyaları işle" de.
 
+**Durum (Adım 2b):** Kaynak incelemesi yapıldı. Resmî Gazete sitesi geliştirme ortamından
+yanıt vermiyor; Danıştay karar arama veritabanında İBK kararları ayrı bir birim olarak yer
+almıyor ve arka ucu belgelenmemiş bir API olduğu için otomatik çekme yapılmadı. Elle indirme
+yolu seçildi: indirilecek ilk 10 karar `docs/indirilecekler.md` içinde; dosyalar
+`data/raw/resmigazete/` altına konup `python -m data.pipeline.verify_official` çalıştırılır.
+Sonuçlar `docs/dogrulama_raporu.md` dosyasına yazılır.
+
 ---
 
 ## Adım 2c — Eksikleri tamamla

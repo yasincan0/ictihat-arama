@@ -35,3 +35,22 @@ python -m data.pipeline.load_seed             # yeni kayıtları ekler, var olan
 python -m data.pipeline.load_seed --dry-run   # yazmadan raporlar
 python -m data.pipeline.load_seed --update    # doğrulanmamış kayıtları listeden günceller
 ```
+
+## Resmî metinlerle doğrulama (Adım 2b)
+
+Resmî Gazete sitesine otomatik erişim yok (geliştirme ortamından yanıt vermiyor); kararların
+yayımlandığı sayılar elle indirilir. Ayrıntılar ve ilk 10 kararın listesi:
+[`docs/indirilecekler.md`](docs/indirilecekler.md).
+
+```bash
+# OCR için (taranmış PDF'ler): apt-get install -y poppler-utils tesseract-ocr tesseract-ocr-tur
+# Dosyaları data/raw/resmigazete/ altına rg-YYYYMMDD-SAYI_sira-N.pdf adıyla koyun, sonra:
+python -m data.pipeline.verify_official            # doğrula, docs/dogrulama_raporu.md üret
+python -m data.pipeline.verify_official --dry-run  # yazmadan dene
+python -m data.pipeline.verify_official --force    # işlenmiş dosyaları yeniden işle
+python -m data.pipeline.verify_official --liste    # indirme listesini yeniden üret
+```
+
+Tüm denetimlerden (esas, karar, karar tarihi, Resmî Gazete tarih/sayısı, kurul adı, özet
+uyumu, hüküm yönü) geçen kararlar `dogrulandi=true` yapılır; diğerleri gerekçeleriyle
+`docs/dogrulama_raporu.md` içinde listelenir. Önceden doğrulanmış kayıtlara dokunulmaz.
