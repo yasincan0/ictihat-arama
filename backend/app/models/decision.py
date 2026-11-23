@@ -37,6 +37,7 @@ class Decision(TimestampMixin, Base):
     __tablename__ = "decisions"
     __table_args__ = (
         UniqueConstraint("mahkeme", "kurul", "esas_no", "karar_no", name="uq_decision_kunye"),
+        UniqueConstraint("seed_sira", name="uq_decisions_seed_sira"),
         Index("ix_decisions_durum", "durum"),
         Index("ix_decisions_dogrulandi", "dogrulandi"),
     )
@@ -68,6 +69,10 @@ class Decision(TimestampMixin, Base):
     notlar: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
     dogrulandi: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     dogrulama_kaynagi: Mapped[str | None] = mapped_column(String(1000))
+    # Başlangıç listesindeki sıra numarası (yalnızca künyeli kayıtlarda) ve ham kayıt;
+    # doğrulama sırasında kaynağa geri dönebilmek için saklanır.
+    seed_sira: Mapped[int | None] = mapped_column(Integer)
+    seed_veri: Mapped[dict | None] = mapped_column(JSONB)
 
     chunks: Mapped[list["DecisionChunk"]] = relationship(
         back_populates="decision", cascade="all, delete-orphan", order_by="DecisionChunk.sira"

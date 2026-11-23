@@ -26,3 +26,12 @@ python3.12 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
 
 cd ../frontend && npm install && npm run dev
 ```
+
+## Başlangıç listesini yükleme
+
+```bash
+# depo kökünden; önce: cd backend && alembic upgrade head
+python -m data.pipeline.load_seed             # yeni kayıtları ekler, var olanlara dokunmaz
+python -m data.pipeline.load_seed --dry-run   # yazmadan raporlar
+python -m data.pipeline.load_seed --update    # doğrulanmamış kayıtları listeden günceller
+```
